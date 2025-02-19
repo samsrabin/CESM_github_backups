@@ -17,13 +17,14 @@ c1grep() { grep "$@" || test $? = 1; }
 # Return 1 if org/repo is malformed, 0 otherwise
 is_malformed() { [[ "$@" != *"/"* ]] && echo 1 || echo 0; }
 
-# Skip if already done
-d="$(realpath ${topdir})/${todaysdir}/${org_repo}"
-if [[ -d "${d}" ]]; then
-    cd "${d}"
+# Skip if already done (and be case-insensitive about it)
+d="${todaysdir}/${org_repo}"
+exists="$(find "${todaysdir}" -mindepth 2 -maxdepth 2 -type d -iwholename "${d}" | wc -l)"
+if [[ "${exists}" -ne 0 ]]; then
     echo "${indentation}Already got ${org_repo}."
     exit 0
 fi
+d="$(realpath ${topdir})/${d}"
 
 # Skip if malformed
 if [[ $(is_malformed ${org_repo}) -ne 0 ]]; then
