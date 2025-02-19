@@ -21,7 +21,7 @@ is_malformed() { [[ "$@" != *"/"* ]] && echo 1 || echo 0; }
 d="${todaysdir}/${org_repo}"
 exists="$(find "${todaysdir}" -mindepth 2 -maxdepth 2 -type d -iwholename "${d}" | wc -l)"
 if [[ "${exists}" -ne 0 ]]; then
-    echo "${indentation}Already got ${org_repo}."
+    #echo "Already got ${org_repo}."
     exit 0
 fi
 d="$(realpath ${topdir})/${d}"
