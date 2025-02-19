@@ -84,7 +84,7 @@ if [[ "$(git rev-list -n 1 --all -- .gitmodules | wc -l)" -gt 0 ]]; then
 
             # Skip if malformed
             if [[ $(is_malformed ${submodule_org_repo}) -ne 0 ]]; then
-                echo "${indentation}Skipping malformed org/repo ${submodule_org_repo}"
+                echo "${indentation}---Skipping malformed org/repo ${submodule_org_repo}"
                 continue
             fi
 
