@@ -32,6 +32,10 @@ if [[ $(is_malformed ${org_repo}) -ne 0 ]]; then
     exit 0
 fi
 
+# Print info
+if [[ "${indentation}" == "" ]]; then
+    echo "Saving to '$(realpath "${todaysdir}")'"
+fi
 echo "${indentation}Getting ${org_repo}..."
 
 # Make directory
@@ -75,11 +79,24 @@ if [[ "$(git rev-list -n 1 --all -- .gitmodules | wc -l)" -gt 0 ]]; then
     default_branch="$(git rev-parse --abbrev-ref HEAD)"
     branches="$(git for-each-ref --format='%(refname:short)' refs/heads/)"
     for b in ${branches}; do
+
+        # Check out the branch
         git checkout $b 1>>"${logfile}" 2>&1
         if [[ ! -f .gitmodules ]]; then
             continue
         fi
+
+        # Get all the repos linked in .gitmodules
         submodule_org_repos="$(grep -E "\burl = " .gitmodules | grep -oE "https://.*" | cut -d"/" -f4-5 | sed -E "s/\.git$//")"
+
+        # Manually add a few that aren't in .gitmodules anywhere
+        manually_added_list=""
+        if [[ "${org_repo}" == "ESCOMP/CESM" ]]; then
+            manually_added_list="ESMCI/git-fleximod ESCOMP/CAM-SIMA"
+            submodule_org_repos="${manually_added_list} ${submodule_org_repos}"
+        fi
+
+        # Download all submodules
         for submodule_org_repo in ${submodule_org_repos}; do
 
             # Skip if malformed
@@ -89,8 +106,9 @@ if [[ "$(git rev-list -n 1 --all -- .gitmodules | wc -l)" -gt 0 ]]; then
             fi
 
             # This script assumes submodules are hosted on github.com
-            if [[ $(c1grep -E "github.com[:/]${submodule_org_repo}" .gitmodules | wc -l) -eq 0 ]]; then
-            pwd
+            on_github=$(c1grep -E "github.com[:/]${submodule_org_repo}" .gitmodules | wc -l)
+            was_manually_added=$(echo ${manually_added_list} | c1grep -E "\b${submodule_org_repo}\b" | wc -l)
+            if [[ $((on_github + was_manually_added)) -eq 0 ]]; then
                 msg="${submodule_org_repo} is hosted somewhere other than github.com: $(grep ${submodule_org_repo} .gitmodules)"
                 echo ${msg} >&2
                 echo ${msg} >> "${logfile}"
