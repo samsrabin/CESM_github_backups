@@ -97,6 +97,11 @@ if [[ "$(git rev-list -n 1 --all -- .gitmodules | wc -l)" -gt 0 ]]; then
                 exit 1
             fi
 
+            # Sometimes the URL ends in .git, which we don't want
+            if [[ "${submodule_org_repo}" == *".git" ]]; then
+                submodule_org_repo="$(echo ${submodule_org_repo} | sed -E "s/\.git$//")"
+            fi
+
             # Make sure repo actually exists
             set +e
             git ls-remote git@github.com:${submodule_org_repo} 1>/dev/null 2>&1
