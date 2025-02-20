@@ -8,6 +8,7 @@ cd "${topdir}"
 org_repo="${1:-ESCOMP/CESM}"
 todaysdir="${2:-CESM_repos_$(date "+%Y%m%d%H%M%S")}"
 indentation="$3"
+requestor="$4"
 mkdir -p "${todaysdir}"
 
 # grep wrapper that will not error if no matches are found
@@ -19,9 +20,13 @@ is_malformed() { [[ "$@" != *"/"* ]] && echo 1 || echo 0; }
 
 # Skip if already done (and be case-insensitive about it)
 d="${todaysdir}/${org_repo}"
-exists="$(find "${todaysdir}" -mindepth 2 -maxdepth 2 -type d -iwholename "${d}" | wc -l)"
+d2="$(find "${todaysdir}" -mindepth 2 -maxdepth 2 -type d -iwholename "${d}")"
+exists="$(echo $d2 | wc -w)"
 if [[ "${exists}" -ne 0 ]]; then
-    #echo "Already got ${org_repo}."
+    # Log the requesting org_repo, if any
+    if [[ "${requestor}" != "" ]]; then
+        echo "${requestor}" >> "${d2}/requested_by.log"
+    fi
     exit 0
 fi
 d="$(realpath ${topdir})/${d}"
@@ -47,6 +52,11 @@ d="$PWD"
 logfile="${d}/backup.log"
 touch "${logfile}"
 logfile="$(realpath "${logfile}")"
+
+# Log the requesting org_repo, if any
+if [[ "${requestor}" != "" ]]; then
+    echo "${requestor}" >> "${d}/requested_by.log"
+fi
 
 # Back up (some) GitHub stuff
 "${topdir}"/backup_github.sh 1>>"${logfile}" 2>&1
@@ -133,7 +143,7 @@ if [[ "$(git rev-list -n 1 --all -- .gitmodules | wc -l)" -gt 0 ]]; then
             fi
 
             # Back up this repo
-            "${topdir}"/backup_recursive.sh ${submodule_org_repo} "${todaysdir}" "${indentation}---"
+            "${topdir}"/backup_recursive.sh ${submodule_org_repo} "${todaysdir}" "${indentation}---" "${org_repo} branch ${b}"
         done
         git stash 1>/dev/null
     done
